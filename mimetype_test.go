@@ -184,9 +184,10 @@ var files = map[string]string{
 	"tar.oldgnu.tar":     "application/x-tar",
 	"tar.posix.tar":      "application/x-tar",
 	// tar.star.tar was generated with star 1.6.
-	"tar.star.tar":  "application/x-tar",
-	"tar.ustar.tar": "application/x-tar",
-	"tar.v7.tar":    "application/x-tar",
+	"tar.star.tar":     "application/x-tar",
+	"tar.ustar.tar":    "application/x-tar",
+	"tar.v7.tar":       "application/x-tar",
+	"tar.issue464.tar": "application/x-tar",
 	// tar.v7-gnu.tar is a v7 tar archive generated with GNU tar 1.29.
 	"tar.v7-gnu.tar":  "application/x-tar",
 	"tcl.tcl":         "text/x-tcl",
@@ -487,9 +488,11 @@ func BenchmarkSliceRand(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for n := 0; n < b.N; n++ {
-		Detect(data)
-	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Detect(data)
+		}
+	})
 }
 
 func BenchmarkText(b *testing.B) {
@@ -505,30 +508,6 @@ func BenchmarkText(b *testing.B) {
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
 				m.detector(data, uint32(len(data)))
-			}
-		})
-	}
-}
-
-// BenchmarkFiles benchmarks each detector with his coresponding file.
-func BenchmarkFiles(b *testing.B) {
-	for f, m := range files {
-		data, err := os.ReadFile(filepath.Join(testDataDir, f))
-		if err != nil {
-			b.Fatal(err)
-		}
-		if uint32(len(data)) > defaultLimit {
-			data = data[:defaultLimit]
-		}
-		b.Run(f+"/"+m, func(b *testing.B) {
-			b.ReportAllocs()
-			b.ResetTimer()
-			parsed, _, _ := mime.ParseMediaType(m)
-			mType := Lookup(parsed)
-			for n := 0; n < b.N; n++ {
-				if !mType.detector(data, uint32(len(data))) {
-					b.Fatal("detection should never fail")
-				}
 			}
 		})
 	}
@@ -704,4 +683,5 @@ func FuzzMimetype(f *testing.F) {
 			t.Skip()
 		}
 	})
+
 }

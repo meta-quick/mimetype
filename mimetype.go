@@ -43,6 +43,14 @@ func Detect(in []byte) *MIME {
 //
 //	reader.Seek(0, io.SeekStart)
 func DetectReader(r io.Reader) (*MIME, error) {
+	in, l, err := loadFile(r)
+	if err != nil {
+		return errMIME, err
+	}
+	return root.match(in, l), nil
+}
+
+func loadFile(r io.Reader) ([]byte, uint32, error) {
 	var in []byte
 	var err error
 
@@ -51,7 +59,7 @@ func DetectReader(r io.Reader) (*MIME, error) {
 	if l == 0 {
 		in, err = io.ReadAll(r)
 		if err != nil {
-			return errMIME, err
+			return nil, 0, err
 		}
 	} else {
 		var n int
@@ -60,14 +68,33 @@ func DetectReader(r io.Reader) (*MIME, error) {
 		// it just means the input file is smaller than the allocated bytes slice.
 		n, err = io.ReadFull(r, in)
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-			return errMIME, err
+			return nil, 0, err
 		}
 		in = in[:n]
 	}
-
 	mu.RLock()
 	defer mu.RUnlock()
-	return root.match(in, l), nil
+	return in, l, nil
+}
+
+func GetDetectorByExt(path string, ext string) (*MIME, error) {
+	for _, m := range root.children {
+		if ext == m.extension {
+			if m != nil {
+				f, err := os.Open(path)
+				if err != nil {
+					return errMIME, err
+				}
+				defer f.Close()
+				in, l, err := loadFile(f)
+				if err != nil {
+					return errMIME, err
+				}
+				return m.match(in, l), nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 // DetectFile returns the MIME type of the provided file.
@@ -81,6 +108,8 @@ func DetectFile(path string) (*MIME, error) {
 		return errMIME, err
 	}
 	defer f.Close()
+
+	//根据后缀名查询 mimetype
 
 	return DetectReader(f)
 }

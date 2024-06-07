@@ -3,6 +3,7 @@ package magic
 import (
 	"bytes"
 	"encoding/binary"
+	"strconv"
 )
 
 var (
@@ -109,8 +110,8 @@ func Tar(raw []byte, _ uint32) bool {
 	}
 
 	// Get the checksum recorded into the file.
-	recsum := tarParseOctal(raw[148:156])
-	if recsum == -1 {
+	recsum, err := tarParseOctal(raw[148:156])
+	if err != nil {
 		return false
 	}
 	sum1, sum2 := tarChksum(raw)
@@ -118,26 +119,28 @@ func Tar(raw []byte, _ uint32) bool {
 }
 
 // tarParseOctal converts octal string to decimal int.
-func tarParseOctal(b []byte) int64 {
+func tarParseOctal(b []byte) (int64, error) {
 	// Because unused fields are filled with NULs, we need to skip leading NULs.
 	// Fields may also be padded with spaces or NULs.
 	// So we remove leading and trailing NULs and spaces to be sure.
 	b = bytes.Trim(b, " \x00")
 
 	if len(b) == 0 {
-		return -1
+		return 0, nil
 	}
-	ret := int64(0)
-	for _, b := range b {
-		if b == 0 {
-			break
-		}
-		if !(b >= '0' && b <= '7') {
-			return -1
-		}
-		ret = (ret << 3) | int64(b-'0')
+	x, err := strconv.ParseUint(tarParseString(b), 8, 64)
+	if err != nil {
+		return 0, err
 	}
-	return ret
+	return int64(x), nil
+}
+
+// tarParseString converts a NUL ended bytes slice to a string.
+func tarParseString(b []byte) string {
+	if i := bytes.IndexByte(b, 0); i >= 0 {
+		return string(b[:i])
+	}
+	return string(b)
 }
 
 // tarChksum computes the checksum for the header block b.

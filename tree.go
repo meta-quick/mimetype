@@ -1,9 +1,8 @@
 package mimetype
 
 import (
+	"github.com/gabriel-vasile/mimetype/internal/magic"
 	"sync"
-
-	"github.com/meta-quick/mimetype/internal/magic"
 )
 
 // mimetype stores the list of MIME types in a tree structure with
@@ -17,7 +16,7 @@ import (
 // are tried in order to find a more accurate MIME type.
 var root = newMIME("application/octet-stream", "",
 	func([]byte, uint32) bool { return true },
-	xpm, sevenZ, zip, pdf, fdf, ole, ps, psd, p7s, ogg, png, jpg, jxl, jp2, jpx,
+	doc, docx, xlsx, xls, ppt, pptx, xpm, sevenZ, pdf, fdf, ole, ps, psd, p7s, ogg, jpg, png, jxl, jp2, jpx,
 	jpm, jxs, gif, webp, exe, elf, ar, tar, xar, bz2, fits, tiff, bmp, ico, mp3, flac,
 	midi, ape, musePack, amr, wav, aiff, au, mpeg, quickTime, mqv, mp4, webM,
 	threeGP, threeG2, avi, flv, mkv, asf, aac, voc, aMp4, m4a, m3u, m4v, rmvb,
@@ -26,7 +25,7 @@ var root = newMIME("application/octet-stream", "",
 	heicSeq, heif, heifSeq, hdr, mrc, mdb, accdb, zstd, cab, rpm, xz, lzip,
 	torrent, cpio, tzif, xcf, pat, gbr, glb, avif, cabIS, jxr,
 	// Keep text last because it is the slowest check
-	text,
+	zip, text,
 )
 
 // errMIME is returned from Detect functions when err is not nil.
@@ -39,18 +38,21 @@ var mu = &sync.RWMutex{}
 
 // The list of nodes appended to the root node.
 var (
+	doc = newMIME("application/msword", ".doc", magic.Doc).
+		alias("application/vnd.ms-word")
+	ppt = newMIME("application/vnd.ms-powerpoint", ".ppt", magic.Ppt).
+		alias("application/mspowerpoint")
+
 	xz   = newMIME("application/x-xz", ".xz", magic.Xz)
 	gzip = newMIME("application/gzip", ".gz", magic.Gzip).alias(
 		"application/x-gzip", "application/x-gunzip", "application/gzipped",
 		"application/gzip-compressed", "application/x-gzip-compressed",
 		"gzip/document")
 	sevenZ = newMIME("application/x-7z-compressed", ".7z", magic.SevenZ)
-	zip    = newMIME("application/zip", ".zip", magic.Zip, xlsx, docx, pptx, epub, jar, odt, ods, odp, odg, odf, odc, sxc).
-		alias("application/x-zip", "application/x-zip-compressed")
-	tar = newMIME("application/x-tar", ".tar", magic.Tar)
-	xar = newMIME("application/x-xar", ".xar", magic.Xar)
-	bz2 = newMIME("application/x-bzip2", ".bz2", magic.Bz2)
-	pdf = newMIME("application/pdf", ".pdf", magic.Pdf).
+	tar    = newMIME("application/x-tar", ".tar", magic.Tar)
+	xar    = newMIME("application/x-xar", ".xar", magic.Xar)
+	bz2    = newMIME("application/x-bzip2", ".bz2", magic.Bz2)
+	pdf    = newMIME("application/pdf", ".pdf", magic.Pdf).
 		alias("application/x-pdf")
 	fdf  = newMIME("application/vnd.fdf", ".fdf", magic.Fdf)
 	xlsx = newMIME("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx", magic.Xlsx)
@@ -62,10 +64,6 @@ var (
 	msi  = newMIME("application/x-ms-installer", ".msi", magic.Msi).
 		alias("application/x-windows-installer", "application/x-msi")
 	aaf = newMIME("application/octet-stream", ".aaf", magic.Aaf)
-	doc = newMIME("application/msword", ".doc", magic.Doc).
-		alias("application/vnd.ms-word")
-	ppt = newMIME("application/vnd.ms-powerpoint", ".ppt", magic.Ppt).
-		alias("application/mspowerpoint")
 	pub = newMIME("application/vnd.ms-publisher", ".pub", magic.Pub)
 	xls = newMIME("application/vnd.ms-excel", ".xls", magic.Xls).
 		alias("application/msexcel")
@@ -193,6 +191,7 @@ var (
 	shx     = newMIME("application/vnd.shx", ".shx", magic.Shx, shp)
 	dbf     = newMIME("application/x-dbf", ".dbf", magic.Dbf)
 	exe     = newMIME("application/vnd.microsoft.portable-executable", ".exe", magic.Exe)
+	dll     = newMIME("application/x-msdownload", ".dll", magic.Dll)
 	elf     = newMIME("application/x-elf", "", magic.Elf, elfObj, elfExe, elfLib, elfDump)
 	elfObj  = newMIME("application/x-object", "", magic.ElfObj)
 	elfExe  = newMIME("application/x-executable", "", magic.ElfExe)
@@ -257,4 +256,6 @@ var (
 	xfdf    = newMIME("application/vnd.adobe.xfdf", ".xfdf", magic.Xfdf)
 	glb     = newMIME("model/gltf-binary", ".glb", magic.Glb)
 	jxr     = newMIME("image/jxr", ".jxr", magic.Jxr).alias("image/vnd.ms-photo")
+	zip     = newMIME("application/zip", ".zip", magic.Zip, xlsx, docx, pptx, epub, jar, odt, ods, odp, odg, odf, odc, sxc).
+		alias("application/x-zip", "application/x-zip-compressed")
 )

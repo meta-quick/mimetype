@@ -13,6 +13,8 @@ var (
 	Wasm = prefix([]byte{0x00, 0x61, 0x73, 0x6D})
 	// Exe matches a Windows/DOS executable file.
 	Exe = prefix([]byte{0x4D, 0x5A})
+	
+	Dll = prefix([]byte{0x4D, 0x5A})
 	// Elf matches an Executable and Linkable Format file.
 	Elf = prefix([]byte{0x7F, 0x45, 0x4C, 0x46})
 	// Nes matches a Nintendo Entertainment system ROM file.
