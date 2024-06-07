@@ -1,7 +1,7 @@
 package mimetype
 
 import (
-	"github.com/gabriel-vasile/mimetype/internal/magic"
+	"github.com/meta-quick/mimetype/internal/magic"
 	"sync"
 )
 

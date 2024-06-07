@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gabriel-vasile/mimetype/internal/charset"
-	"github.com/gabriel-vasile/mimetype/internal/json"
+	"github.com/meta-quick/mimetype/internal/charset"
+	"github.com/meta-quick/mimetype/internal/json"
 )
 
 var (
